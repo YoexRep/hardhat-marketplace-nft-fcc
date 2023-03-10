@@ -47,4 +47,47 @@ const { developmentChains } = require("../../helper-hardhat-config")
               assert(newOwner.toString() == player.address)
               assert(deployerProceeds.toString() == PRICE.toString())
           })
+
+          //Pruebas unitarias para cada metodo
+
+          describe("buyItem", function () {
+              it("reverts if price isnt met", async function () {
+                  await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+                  const PRICE_bajo = ethers.utils.parseEther("0.05")
+
+                  await expect(
+                      nftMarketplace.buyItem(basicNft.address, TOKEN_ID, {
+                          value: PRICE_bajo,
+                      })
+                  ).to.be.revertedWith("NftMarketplace__PriceNotMet")
+              })
+          })
+
+          //Solo poder cancelar si soy el dueño-- NftMarketplace__NotOwner
+          describe("cancelListing", function () {
+              it("cant cancel if i not the owner", async function () {
+                  await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+
+                  nftMarketplace = nftMarketplace.connect(player)
+                  await basicNft.approve(player.address, TOKEN_ID)
+
+                  await expect(
+                      nftMarketplace.cancelListing(basicNft.address, TOKEN_ID)
+                  ).to.be.revertedWith("NftMarketplace__NotOwner")
+              })
+          })
+
+          //Actualizado el precio luego listado
+
+          describe("updateListing", function () {
+              it("updates the price of the item", async function () {
+                  const updatedPrice = ethers.utils.parseEther("0.2")
+                  await nftMarketplace.listItem(basicNft.address, TOKEN_ID, PRICE)
+                  expect(
+                      await nftMarketplace.updateListing(basicNft.address, TOKEN_ID, updatedPrice)
+                  ).to.emit("ItemListed")
+                  const listing = await nftMarketplace.getListing(basicNft.address, TOKEN_ID)
+                  assert(listing.price.toString() == updatedPrice.toString())
+              })
+          })
       })
