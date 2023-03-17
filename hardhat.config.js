@@ -58,5 +58,6 @@ module.exports = {
         apiKey: {
             goerli: ETHERSCAN_API_KEY,
         },
+        customChains: [],
     },
 }
