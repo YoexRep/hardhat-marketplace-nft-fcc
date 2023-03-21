@@ -13,6 +13,14 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY || "key"
 
 const COINMARKETCAP_API_KEY = process.env.COINMARKETCAP_API_KEY || "key"
 
+const SEPOLIA_RPC_URL = process.env.SEPOLIA_RPC_URL || "key"
+
+//MUMBAI TESTNET DE POLYGON
+
+const MUMBAI_RPC_URL = process.env.MUMBAI_RPC_URL || "key"
+
+const POLYGONSCAN_API_KEY = process.env.POLYGONSCAN_API_KEY || "key"
+
 module.exports = {
     solidity: {
         compilers: [{ version: "0.8.8" }, { version: "0.6.6" }, { version: "0.8.17" }],
@@ -31,15 +39,29 @@ module.exports = {
             chainId: 5,
             blockConfirmation: 6, //Los bloques que tiene que esperar la red de goerli, indice nuestra transaccion. y podamos verla
         },
+        sepolia: {
+            url: SEPOLIA_RPC_URL,
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+            saveDeployments: true,
+            chainId: 11155111,
+            blockConfirmation: 3,
+        },
+        mumbai: {
+            url: MUMBAI_RPC_URL,
+            accounts: PRIVATE_KEY !== undefined ? [PRIVATE_KEY] : [],
+            saveDeployments: true,
+            chainId: 80001,
+            blockConfirmation: 5,
+        },
     },
 
     gasReporter: {
-        enabled: false,
+        enabled: true,
         outputFile: "gas-report.txt", // para exportarlo a un fichero
         noColors: true, // sin color para evitar problemas con el archivo txt
         currency: "USD", // y podemos ponerle en que unidad queremos ver el reporte del gas
         coinmarketcap: COINMARKETCAP_API_KEY, // Para obtener el precio necesito conectarme a coinmarketcap con una API
-        token: "BNB",
+        token: "ETH",
     },
     namedAccounts: {
         deployer: {
@@ -57,6 +79,7 @@ module.exports = {
         // yarn hardhat verify --network <NETWORK> <CONTRACT_ADDRESS> <CONSTRUCTOR_PARAMETERS>
         apiKey: {
             goerli: ETHERSCAN_API_KEY,
+            polygonMumbai: POLYGONSCAN_API_KEY,
         },
         customChains: [],
     },

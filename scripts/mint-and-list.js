@@ -1,7 +1,7 @@
 const { ethers } = require("hardhat")
 
 async function mintAndList() {
-    const PRICE = ethers.utils.parseEther("0.1")
+    const PRICE = ethers.utils.parseEther("1")
 
     const nftMarketplace = await ethers.getContract("NftMarketplace")
     const basicNft = await ethers.getContract("BasicNft") // Obtengo los contratos desplegados en el local blockchain
