@@ -784,8 +784,8 @@
       ]
     },
     "/home/yoex/hardhat-marketplace-fcc/contracts/RafflePersonalizado.sol": {
-      "lastModificationDate": 1680361435500,
-      "contentHash": "c641216e9cdeb6876195af3138036c82",
+      "lastModificationDate": 1680696551740,
+      "contentHash": "6d37a08a976c6201733d08407cbf1d32",
       "sourceName": "contracts/RafflePersonalizado.sol",
       "solcConfig": {
         "version": "0.8.17",

@@ -41,20 +41,28 @@ contract RafflePersonalizado is VRFConsumerBaseV2, AutomationCompatibleInterface
     address payable[] private s_players;
     RaffleState private s_raffleState;
     uint256 private constant numMaxPlay = 100; //El numero maximo que puede salir al jugar
+    uint256 private s_ronda_loteria = 1;
 
-    //Structuras
-    struct Plays {
-        uint256 num;
-        address player;
+    //mapping del numero de la ronda de loteria => mapeando cada numero jugado => con un listado de jugadores
+    //mapping (uint256  => mapping (uint256 => Jugadores[])) private s_listado_jugadores;
+    mapping(uint256 => mapping(uint256 => DatosJugador[])) private s_listado_jugadores;
+
+    struct DatosJugador {
+        uint256 numJugado;
+        address jugador;
     }
 
-    //MAPPINGS
-    mapping(address => uint256) private s_lottery_plays;
+    struct JugadoresGanadores {
+        address jugador;
+        uint256 cantidadGanada;
+    }
+
+    JugadoresGanadores[] private ganadoresRecientes;
 
     /* Events */
     event RequestedRaffleWinner(uint256 indexed requestId);
     event RaffleEnter(address indexed player);
-    event WinnerPicked(address indexed player);
+    event WinnerPicked(JugadoresGanadores[] indexed players);
 
     /* Functions */
     constructor(
@@ -84,9 +92,12 @@ contract RafflePersonalizado is VRFConsumerBaseV2, AutomationCompatibleInterface
         if (s_raffleState != RaffleState.OPEN) {
             revert Raffle__RaffleNotOpen();
         }
-        s_players.push(payable(msg.sender));
 
-        s_lottery_plays[payable(msg.sender)] = numTicket;
+        DatosJugador memory nuevoParticipante = DatosJugador(numTicket, msg.sender);
+
+        s_listado_jugadores[s_ronda_loteria][numTicket].push(nuevoParticipante);
+
+        s_players.push(payable(msg.sender));
 
         // Emit an event when we update a dynamic array or mapping
         // Named events with the function name reversed
@@ -151,20 +162,70 @@ contract RafflePersonalizado is VRFConsumerBaseV2, AutomationCompatibleInterface
 
         //Listing memory listedItem = s_listings[nftAddress][tokenId];
 
-        address payable recentWinner = s_players[winnerNum];
+        //Limpio el array de ganadores recientes
+        delete ganadoresRecientes;
+
+        //creo un array temporal de los ganadores de esta ronda, usando el mapping, puedo obtener un array con todos los jugadores que cumplan con esta condicion
+        DatosJugador[] memory participantesGanadores = s_listado_jugadores[s_ronda_loteria][
+            winnerNum
+        ];
+
+        uint256 cantidadGanada = address(this).balance / participantesGanadores.length;
+
+        // emit MyEvent(cantidadGanada, participantesGanadores.length, numeroGanador, participantesGanadores[0].jugador);
+
+        for (uint256 i = 0; i < participantesGanadores.length; i++) {
+            JugadoresGanadores memory JugadorGanador = JugadoresGanadores(
+                participantesGanadores[i].jugador,
+                cantidadGanada
+            );
+
+            ganadoresRecientes.push(JugadorGanador);
+        }
+
+        s_ronda_loteria += 1;
+
+        /* address payable recentWinner = s_players[winnerNum];
         s_recentWinner = recentWinner;
-        s_players = new address payable[](0);
+        s_players = new address payable[](0);*/
         s_raffleState = RaffleState.OPEN;
         s_lastTimeStamp = block.timestamp;
-        (bool success, ) = recentWinner.call{value: address(this).balance}("");
-        // require(success, "Transfer failed");
+        /*(bool success, ) = recentWinner.call{value: address(this).balance}("");
+         require(success, "Transfer failed");
         if (!success) {
             revert Raffle__TransferFailed();
+        }*/
+        emit WinnerPicked(ganadoresRecientes);
+    }
+
+    function sacarGanancias(address direccionJugador) public {
+        //Creamos un array temporal en memory para ahorrar dinero en el for
+        JugadoresGanadores[] memory memory_ganadoresReciente = ganadoresRecientes;
+
+        for (uint256 i = 0; i < memory_ganadoresReciente.length; i++) {
+            if (memory_ganadoresReciente[i].jugador == direccionJugador) {
+                uint256 CantidadGanada = memory_ganadoresReciente[i].cantidadGanada;
+
+                //Elimino este registro para evitar Reentrency Attack
+                delete ganadoresRecientes[i];
+
+                //Si cumple la condicion le envio el dinero al jugador
+                (bool success, ) = direccionJugador.call{value: CantidadGanada}("");
+
+                require(success);
+            }
         }
-        emit WinnerPicked(recentWinner);
     }
 
     /** Getter Functions */
+
+    function obtenerGanadoresRecientes() public view returns (JugadoresGanadores[] memory) {
+        return ganadoresRecientes;
+    }
+
+    function obtenerActualRondaLoteria() public view returns (uint256) {
+        return s_ronda_loteria;
+    }
 
     function getRaffleState() public view returns (RaffleState) {
         return s_raffleState;

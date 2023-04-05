@@ -29,10 +29,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
         waitConfirmations: network.config.blockConfirmation || 1,
     })
 
-    /* if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
+    if (!developmentChains.includes(network.name) && process.env.ETHERSCAN_API_KEY) {
         log("Verifying...")
         await verify(nftMarketplace.address, arguments)
-    }*/
+    }
 
     log("-----------------------------------------------------------------")
 }
